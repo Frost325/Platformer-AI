@@ -7,17 +7,24 @@ pygame.display.set_caption("Platformer 1v1")
 # p1 stuff
 p1_avatar_right = pygame.image.load("./Yellow Player.png").convert()
 p1_avatar_left = pygame.transform.flip(p1_avatar_right.copy(), True, False)
-direction = 1 # 0 = left, 1 = right, start as right by default
+p1_direction = 1 # 0 = left, 1 = right, start as right by default
 p1_width, p1_height = p1_avatar_right.get_width(), p1_avatar_right.get_height()
 p1_x, p1_y = 100, 100
 p1_horizontal_velocity = 0
 p1_vertical_velocity = 5
-falling = True
+p1_falling = True
 p1_heart = pygame.image.load("./Yellow Heart.png").convert()
 p1_health = 5
 
 # p2 stuff
-
+p2_avatar_right = pygame.image.load("./Purple Player.png").convert()
+p2_avatar_left = pygame.transform.flip(p2_avatar_right.copy(), True, False)
+p2_direction = 0 # 0 = left, 1 = right, start as right by default
+p2_width, p2_height = p2_avatar_right.get_width(), p2_avatar_right.get_height()
+p2_x, p2_y = 1820 - p2_width, 100
+p2_horizontal_velocity = 0
+p2_vertical_velocity = 5
+p2_falling = True
 p2_heart = pygame.image.load("./Purple Heart.png").convert()
 p2_health = 5
 
@@ -50,7 +57,7 @@ def drawMap():
     screen.blit(h1, (1860 - p2_heart.get_width() - h1.get_width(), 30))
     return
 
-def collisions(): # later could make it return a tuple for p1_falling, p2_falling
+def p1_collisions(): # later could make it return a tuple for p1_falling, p2_falling
     global p1_x
     global p1_y
     # bottom left big floor
@@ -83,6 +90,39 @@ def collisions(): # later could make it return a tuple for p1_falling, p2_fallin
         return False
     return True # falling
 
+def p2_collisions(): # later could make it return a tuple for p1_falling, p2_falling
+    global p2_x
+    global p2_y
+    # bottom left big floor
+    if p2_x <= 750 and p2_x >= 250 - p2_width and p2_y >= 700 - p2_height and p2_y <= 710 - p2_height:
+        p2_y = 700 - p2_height
+        return False
+    # bottom right big floor
+    if p2_x <= 1670 and p2_x >= 1170 - p2_width and p2_y >= 700 - p2_height and p2_y <= 710 - p2_height:
+        p2_y = 700 - p2_height
+        return False
+    # top left big floor
+    if p2_x <= 750 and p2_x >= 250 - p2_width and p2_y >= 300 - p2_height and p2_y <= 310 - p2_height:
+        p2_y = 300 - p2_height
+        return False
+    # top right big floor
+    if p2_x <= 1670 and p2_x >= 1170 - p2_width and p2_y >= 300 - p2_height and p2_y <= 310 - p2_height:
+        p2_y = 300 - p2_height
+        return False
+    # left small floor
+    if p2_x <= 200 and p2_x >= 0 - p2_width and p2_y >= 500 - p2_height and p2_y <= 510 - p2_height:
+        p2_y = 500 - p2_height
+        return False
+    # right small floor
+    if p2_x <= 1920 and p2_x >= 1720 - p2_width and p2_y >= 500 - p2_height and p2_y <= 510 - p2_height:
+        p2_y = 500 - p2_height
+        return False
+    # middle small floor
+    if p2_x <= 1120 and p2_x >= 800 - p2_width and p2_y >= 500 - p2_height and p2_y <= 510 - p2_height:
+        p2_y = 500 - p2_height
+        return False
+    return True # falling
+
 # draw screen
 screen.fill(background_color)
 pygame.display.flip() # updates window?
@@ -94,11 +134,12 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
+            # player 1
             if event.key == pygame.K_w:
                 # print("Move the character upwards")
-                if not falling:
+                if not p1_falling:
                     p1_vertical_velocity = -22
-                    falling = True
+                    p1_falling = True
             elif event.key == pygame.K_s:
                 print("Move the character downwards")
             elif event.key == pygame.K_a:
@@ -107,16 +148,39 @@ while running:
             elif event.key == pygame.K_d:
                 # print("Move the character right")
                 p1_horizontal_velocity += 10
+            # player 2
+            if event.key == pygame.K_UP:
+                # print("Move the character upwards")
+                if not p2_falling:
+                    p2_vertical_velocity = -22
+                    p2_falling = True
+            elif event.key == pygame.K_DOWN:
+                print("Move the character downwards")
+            elif event.key == pygame.K_LEFT:
+                # print("Move the character left")
+                p2_horizontal_velocity += -10
+            elif event.key == pygame.K_RIGHT:
+                # print("Move the character right")
+                p2_horizontal_velocity += 10
         if event.type == pygame.KEYUP:
+            # player 1
             if event.key == pygame.K_a:
                 # print("Stop moving  left")
                 p1_horizontal_velocity += 10
             elif event.key == pygame.K_d:
                 # print("Stop moving right")
                 p1_horizontal_velocity += -10
+            # player 2
+            if event.key == pygame.K_LEFT:
+                # print("Stop moving  left")
+                p2_horizontal_velocity += 10
+            elif event.key == pygame.K_RIGHT:
+                # print("Stop moving right")
+                p2_horizontal_velocity += -10
         elif event.type == pygame.MOUSEBUTTONDOWN:  # Click event
             if event.button == 1:
                 print("Left mouse button pressed")
+    # movement
     p1_x += p1_horizontal_velocity
     p1_y += p1_vertical_velocity
     if p1_x < 0:
@@ -126,24 +190,42 @@ while running:
     if p1_y > 1000 - p1_height: # lava
         p1_y = 100
         p1_health -= 1
-    
+    p2_x += p2_horizontal_velocity
+    p2_y += p2_vertical_velocity
+    if p2_x < 0:
+        p2_x = 0
+    if p2_x > 1920 - p2_width:
+        p2_x = 1920 - p2_width
+    if p2_y > 1000 - p2_height: # lava
+        p2_y = 100
+        p2_health -= 1
     # direction
     if p1_horizontal_velocity > 0:
-        direction = 1
+        p1_direction = 1
     elif p1_horizontal_velocity < 0:
-        direction = 0
+        p1_direction = 0
+    if p2_horizontal_velocity > 0:
+        p2_direction = 1
+    elif p2_horizontal_velocity < 0:
+        p2_direction = 0
     # gravity
     if p1_vertical_velocity < 10:
         p1_vertical_velocity += 1
+    if p2_vertical_velocity < 10:
+        p2_vertical_velocity += 1
     screen.fill(background_color)
     drawMap()
-    falling = collisions()
+    p1_falling = p1_collisions()
+    p2_falling = p2_collisions()
     # draw players
-    if direction == 1:
+    if p1_direction == 1:
         screen.blit(p1_avatar_right, (p1_x, p1_y))
     else:
         screen.blit(p1_avatar_left, (p1_x, p1_y))
-    # pygame.draw.rect(screen, yellow, (p1_x, p1_y, p1_width, p1_height))
+    if p2_direction == 1:
+        screen.blit(p2_avatar_right, (p2_x, p2_y))
+    else:
+        screen.blit(p2_avatar_left, (p2_x, p2_y))
     pygame.display.update() 
 
 pygame.quit()
